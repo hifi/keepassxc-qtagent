@@ -22,7 +22,7 @@ bool Client::addIdentity(Identity& identity, QString comment)
 
     QByteArray wireIdentity = identity.toWireFormat();
 
-    stream << (quint32) wireIdentity.length() + comment.length() + 1;
+    stream << (quint32) wireIdentity.length() + comment.length() + 5;
     stream << SSH_AGENTC_ADD_IDENTITY;
 
     stream << wireIdentity;

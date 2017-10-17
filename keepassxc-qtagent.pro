@@ -29,3 +29,5 @@ HEADERS += \
     SSHAgent/Client.h \
     SSHAgent/Identity.h \
     SSHAgent/AgentStream.h
+
+unix:!macx: LIBS += -lgcrypt

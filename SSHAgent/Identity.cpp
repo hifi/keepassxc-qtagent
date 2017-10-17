@@ -1,4 +1,5 @@
 #include "Identity.h"
+#include <gcrypt.h>
 
 bool Identity::parse()
 {
@@ -96,6 +97,8 @@ bool Identity::parseDer(QByteArray der)
 
 QByteArray Identity::toWireFormat()
 {
+    gcry_mpi_t u, p, q;
+
     QByteArray ba;
     QDataStream stream(&ba, QIODevice::WriteOnly);
 
@@ -111,14 +114,18 @@ QByteArray Identity::toWireFormat()
     //stream << (quint32)m_d.length();
     stream << m_d;
 
-    // FIXME: needs to be implemented as:
-    //   iqmp = modinv(q, p);
-    QByteArray iqmp;
-    iqmp.resize(129);
+    gcry_mpi_scan(&p, GCRYMPI_FMT_HEX, m_p.toHex().data(), 0, NULL);
+    gcry_mpi_scan(&q, GCRYMPI_FMT_HEX, m_q.toHex().data(), 0, NULL);
 
-    // zeroing out for testing
-    for (int i = 0; i < 129; i++)
-        iqmp[i] = 0;
+    u = gcry_mpi_snew(m_p.length() * 8);
+    mpi_invm(u, q, p);
+
+    QByteArray iqmp_hex;
+    iqmp_hex.resize((m_p.length() + 1) * 2);
+
+    gcry_mpi_print(GCRYMPI_FMT_HEX, (unsigned char *)iqmp_hex.data(), iqmp_hex.length(), NULL, u);
+
+    QByteArray iqmp = QByteArray::fromHex(iqmp_hex);
 
     //stream << (quint32)iqmp.length();
     stream << iqmp;
