@@ -1,9 +1,6 @@
 #include "Client.h"
 #include "AgentStream.h"
 
-Client::Client() : m_socketPath(getEnvironmentSocketPath()) { }
-Client::Client(QString socketPath) : m_socketPath(socketPath) { }
-
 QString Client::getEnvironmentSocketPath()
 {
     auto env = QProcessEnvironment::systemEnvironment();
@@ -15,10 +12,10 @@ QString Client::getEnvironmentSocketPath()
     return ""; // should return null or not?
 }
 
-QList<Identity>* Client::getIdentities()
+QList<QSharedPointer<Identity>> Client::getIdentities()
 {
     AgentStream stream(m_socketPath);
-    auto list = new QList<Identity>();
+    QList<QSharedPointer<Identity>> list;
 
     if (!stream.connect()) {
         return list;
@@ -33,32 +30,32 @@ QList<Identity>* Client::getIdentities()
 
     stream >> responseLength;
     stream >> responseType;
-    stream >> numIdentities;
 
-    if (responseType != SSH_AGENT_IDENTITIES_ANSWER) {
-        return list;
-    }
+    if (responseType == SSH_AGENT_IDENTITIES_ANSWER) {
+        stream >> numIdentities;
 
-    for (quint32 i = 0; i < numIdentities; i++) {
-        quint32 keyLength;
-        stream >> keyLength;
+        for (quint32 i = 0; i < numIdentities; i++) {
+            quint32 keyLength;
+            stream >> keyLength;
 
-        // FIXME: hardcoded for RSA keys
-        QString keyType;
-        QByteArray keyE, keyN;
+            // FIXME: hardcoded for RSA keys
+            QString keyType;
+            QByteArray keyE, keyN;
+            QString keyComment;
 
-        stream >> keyType;
-        stream >> keyE;
-        stream >> keyN;
+            stream >> keyType;
+            stream >> keyE;
+            stream >> keyN;
+            stream >> keyComment;
 
-        QString keyComment;
-        stream >> keyComment;
+            qInfo() << "keyLength:" << keyLength;
+            qInfo() << "keyType:" << keyType;
+            qInfo() << "keyE:" << keyE.length() << "bytes";
+            qInfo() << "keyN:" << keyN.length() << "bytes";
+            qInfo() << "keyComment:" << keyComment;
 
-        qInfo() << "keyLength:" << keyLength;
-        qInfo() << "keyType:" << keyType;
-        qInfo() << "keyE:" << keyE.length() << "bytes";
-        qInfo() << "keyN:" << keyN.length() << "bytes";
-        qInfo() << "keyComment:" << keyComment;
+            list.push_back(QSharedPointer<Identity>(new Identity()));
+        }
     }
 
     return list;

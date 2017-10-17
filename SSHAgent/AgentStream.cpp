@@ -3,24 +3,14 @@
 
 AgentStream::AgentStream(QString socketPath)
 {
-    m_socket = new QLocalSocket();
-    m_socket->setServerName(socketPath);
-}
-
-AgentStream::~AgentStream()
-{
-    if (m_socket->isOpen()) {
-        m_socket->close();
-    }
-
-    delete m_socket;
+    m_socket.setServerName(socketPath);
 }
 
 bool AgentStream::connect()
 {
-    m_socket->connectToServer();
+    m_socket.connectToServer();
 
-    if (!m_socket->waitForConnected(500)) {
+    if (!m_socket.waitForConnected(500)) {
         return false;
     }
 
@@ -32,14 +22,14 @@ bool AgentStream::read(uchar *ptr, qint64 size)
     qint64 pos = 0;
 
     while (pos < size) {
-        if (m_socket->bytesAvailable() == 0) {
-            m_socket->waitForReadyRead(-1);
+        if (m_socket.bytesAvailable() == 0) {
+            m_socket.waitForReadyRead(-1);
         }
 
-        qint64 nread = m_socket->read((char *)(ptr + pos), size - pos);
+        qint64 nread = m_socket.read((char *)(ptr + pos), size - pos);
 
         if (nread == -1) {
-            qInfo() << "read error:" << m_socket->errorString();
+            qInfo() << "read error:" << m_socket.errorString();
             return false;
         }
 
@@ -51,8 +41,8 @@ bool AgentStream::read(uchar *ptr, qint64 size)
 
 bool AgentStream::write(uchar *ptr, qint64 size)
 {
-    m_socket->write((char *)ptr, size);
-    m_socket->waitForBytesWritten(-1);
+    m_socket.write((char *)ptr, size);
+    m_socket.waitForBytesWritten(-1);
     return true;
 }
 

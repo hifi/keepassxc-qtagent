@@ -12,7 +12,6 @@ class AgentStream
 {
 public:
     AgentStream(QString socketPath);
-    ~AgentStream();
 
     bool connect();
 
@@ -28,7 +27,7 @@ public:
     AgentStream& operator>>(QString &s);
 
 private:
-    QLocalSocket *m_socket;
+    QLocalSocket m_socket;
 };
 
 #endif // AGENTSOCKET_H

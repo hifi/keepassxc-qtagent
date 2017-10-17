@@ -5,20 +5,12 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    Client client;
+    auto identities = client.getIdentities();
 
-    qInfo() << "Creating new client";
-    auto client = new Client();
-
-    qInfo() << "Going to fetch identities";
-    auto identities = client->getIdentities();
-    qInfo() << "Got 'em";
-
-    foreach (Identity id, *identities) {
+    foreach (QSharedPointer<Identity> id, identities) {
         //qInfo() << id;
     }
 
-    delete identities;
-
-    return a.exec();
+    return 0;
 }
