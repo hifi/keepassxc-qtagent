@@ -111,13 +111,21 @@ QByteArray Identity::toWireFormat()
     //stream << (quint32)m_d.length();
     stream << m_d;
 
-    // FIXME: needs to be implemented
-    //iqmp = modinv(q, p);
-    stream << (quint32) 0; // iqmp length
+    // FIXME: needs to be implemented as:
+    //   iqmp = modinv(q, p);
+    QByteArray iqmp;
+    iqmp.resize(129);
 
-    stream << (quint32)m_p.length();
+    // zeroing out for testing
+    for (int i = 0; i < 129; i++)
+        iqmp[i] = 0;
+
+    //stream << (quint32)iqmp.length();
+    stream << iqmp;
+
+    //stream << (quint32)m_p.length();
     stream << m_p;
-    stream << (quint32)m_q.length();
+    //stream << (quint32)m_q.length();
     stream << m_q;
 
     return ba;
