@@ -63,6 +63,20 @@ AgentStream& AgentStream::operator<<(quint32 i)
     return *this;
 }
 
+AgentStream& AgentStream::operator<<(QByteArray& ba)
+{
+    write((uchar *)ba.data(), ba.length());
+    return *this;
+}
+
+AgentStream& AgentStream::operator<<(QString& s)
+{
+    QByteArray ba = s.toLatin1();
+    *this << (quint32) ba.length();
+    *this << ba;
+    return *this;
+}
+
 AgentStream& AgentStream::operator>>(quint8 &i)
 {
     // this conversion is a no-op but for completeness leaving it like this for now

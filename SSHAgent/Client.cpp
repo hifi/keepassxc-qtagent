@@ -12,6 +12,33 @@ QString Client::getEnvironmentSocketPath()
     return ""; // should return null or not?
 }
 
+bool Client::addIdentity(Identity& identity, QString comment)
+{
+    AgentStream stream(m_socketPath);
+
+    if (!stream.connect()) {
+        return false;
+    }
+
+    QByteArray wireIdentity = identity.toWireFormat();
+
+    stream << (quint32) wireIdentity.length() + comment.length() + 1;
+    stream << SSH_AGENTC_ADD_IDENTITY;
+
+    stream << wireIdentity;
+    stream << comment;
+
+    quint32 responseLength;
+    quint8 responseType;
+
+    stream >> responseLength;
+    stream >> responseType;
+
+    qInfo() << "responseLength" << responseLength << "responseType" << responseType;
+
+    return (responseType == SSH_AGENT_SUCCESS);
+}
+
 QList<QSharedPointer<Identity>> Client::getIdentities()
 {
     AgentStream stream(m_socketPath);
@@ -54,9 +81,14 @@ QList<QSharedPointer<Identity>> Client::getIdentities()
             qInfo() << "keyN:" << keyN.length() << "bytes";
             qInfo() << "keyComment:" << keyComment;
 
-            list.push_back(QSharedPointer<Identity>(new Identity()));
+            //list.push_back(QSharedPointer<Identity>(new Identity()));
         }
     }
 
     return list;
+}
+
+bool Client::removeIdentity(Identity& identity)
+{
+    return false;
 }
