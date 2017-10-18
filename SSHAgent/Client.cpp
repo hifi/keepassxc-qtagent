@@ -1,5 +1,6 @@
 #include "Client.h"
-#include "AgentStream.h"
+#include "PackStream.h"
+#include <QtNetwork>
 
 QString Client::getEnvironmentSocketPath()
 {
@@ -14,68 +15,82 @@ QString Client::getEnvironmentSocketPath()
 
 bool Client::addIdentity(Identity& identity, QString comment)
 {
-    AgentStream stream(m_socketPath);
+    QLocalSocket socket;
+    PackStream stream(&socket);
 
-    if (!stream.connect()) {
+    socket.connectToServer(m_socketPath);
+    if (!socket.waitForConnected(500)) {
         return false;
     }
 
-    QByteArray wireIdentity = identity.toWireFormat();
+    QByteArray requestData;
+    BinaryStream requestStream(&requestData);
 
-    stream << (quint32) wireIdentity.length() + comment.length() + 5;
-    stream << SSH_AGENTC_ADD_IDENTITY;
+    requestStream.write(SSH_AGENTC_ADD_IDENTITY);
+    requestStream.write(identity.toWireFormat());
 
-    stream << wireIdentity;
-    stream << comment;
+    // comment needs to be packed
+    PackStream requestPackStream(requestStream.getDevice());
+    requestPackStream.write(comment);
 
-    quint32 responseLength;
-    quint8 responseType;
+    stream.write(requestData);
+    stream.flush();
 
-    stream >> responseLength;
-    stream >> responseType;
+    QByteArray responseData;
+    stream.read(responseData);
 
-    qInfo() << "responseLength" << responseLength << "responseType" << responseType;
+    if (responseData.length() < 0 || (quint8) responseData[0] != SSH_AGENT_SUCCESS)
+        return false;
 
-    return (responseType == SSH_AGENT_SUCCESS);
+    return true;
 }
 
 QList<QSharedPointer<Identity>> Client::getIdentities()
 {
-    AgentStream stream(m_socketPath);
+    QLocalSocket socket;
+    PackStream stream(&socket);
     QList<QSharedPointer<Identity>> list;
 
-    if (!stream.connect()) {
+    socket.connectToServer(m_socketPath);
+    if (!socket.waitForConnected(500)) {
         return list;
     }
 
-    stream << (quint32) 1; // request size in bytes
-    stream << SSH_AGENTC_REQUEST_IDENTITIES;
+    // write identities request
+    stream.write(SSH_AGENTC_REQUEST_IDENTITIES);
 
-    quint32 responseLength;
+    // read complete response packet
+    QByteArray responseData;
+    stream.read(responseData);
+
+    BinaryStream responseStream(&responseData);
+
     quint8 responseType;
-    quint32 numIdentities;
-
-    stream >> responseLength;
-    stream >> responseType;
+    responseStream.read(responseType);
 
     if (responseType == SSH_AGENT_IDENTITIES_ANSWER) {
-        stream >> numIdentities;
+        quint32 numIdentities;
+        responseStream.read(numIdentities);
+
+        PackStream identityStream(responseStream.getDevice());
 
         for (quint32 i = 0; i < numIdentities; i++) {
-            quint32 keyLength;
-            stream >> keyLength;
+            QByteArray keyData;
+            QString keyComment;
+
+            identityStream.read(keyData);
+            identityStream.read(keyComment);
+
+            PackStream keyStream(&keyData);
 
             // FIXME: hardcoded for RSA keys
             QString keyType;
             QByteArray keyE, keyN;
-            QString keyComment;
 
-            stream >> keyType;
-            stream >> keyE;
-            stream >> keyN;
-            stream >> keyComment;
+            keyStream.read(keyType);
+            keyStream.read(keyE);
+            keyStream.read(keyN);
 
-            qInfo() << "keyLength:" << keyLength;
             qInfo() << "keyType:" << keyType;
             qInfo() << "keyE:" << keyE.length() << "bytes";
             qInfo() << "keyN:" << keyN.length() << "bytes";
