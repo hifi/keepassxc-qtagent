@@ -39,7 +39,7 @@ bool Client::addIdentity(Identity& identity, QString comment)
     QByteArray responseData;
     stream.read(responseData);
 
-    if (responseData.length() < 0 || (quint8) responseData[0] != SSH_AGENT_SUCCESS)
+    if (responseData.length() < 1 || (quint8) responseData[0] != SSH_AGENT_SUCCESS)
         return false;
 
     return true;
