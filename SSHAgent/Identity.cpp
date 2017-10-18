@@ -93,12 +93,29 @@ bool Identity::parseDer(QByteArray der)
     readInt(stream, m_dp);
     readInt(stream, m_dq);
     readInt(stream, m_qinv);
+
+    // calculate iqmp
+    gcry_mpi_t u, p, q;
+    QByteArray iqmp_hex;
+
+    u = gcry_mpi_snew(m_p.length() * 8);
+    gcry_mpi_scan(&p, GCRYMPI_FMT_HEX, m_p.toHex().data(), 0, NULL);
+    gcry_mpi_scan(&q, GCRYMPI_FMT_HEX, m_q.toHex().data(), 0, NULL);
+
+    mpi_invm(u, q, p);
+
+    iqmp_hex.resize((m_p.length() + 1) * 2);
+    gcry_mpi_print(GCRYMPI_FMT_HEX, (unsigned char *)iqmp_hex.data(), iqmp_hex.length(), NULL, u);
+
+    gcry_mpi_release(u);
+    gcry_mpi_release(p);
+    gcry_mpi_release(q);
+
+    m_iqmp = QByteArray::fromHex(iqmp_hex);
 }
 
 QByteArray Identity::toWireFormat()
 {
-    gcry_mpi_t u, p, q;
-
     QByteArray ba;
     QDataStream stream(&ba, QIODevice::WriteOnly);
 
@@ -113,23 +130,8 @@ QByteArray Identity::toWireFormat()
     stream << m_e;
     //stream << (quint32)m_d.length();
     stream << m_d;
-
-    gcry_mpi_scan(&p, GCRYMPI_FMT_HEX, m_p.toHex().data(), 0, NULL);
-    gcry_mpi_scan(&q, GCRYMPI_FMT_HEX, m_q.toHex().data(), 0, NULL);
-
-    u = gcry_mpi_snew(m_p.length() * 8);
-    mpi_invm(u, q, p);
-
-    QByteArray iqmp_hex;
-    iqmp_hex.resize((m_p.length() + 1) * 2);
-
-    gcry_mpi_print(GCRYMPI_FMT_HEX, (unsigned char *)iqmp_hex.data(), iqmp_hex.length(), NULL, u);
-
-    QByteArray iqmp = QByteArray::fromHex(iqmp_hex);
-
     //stream << (quint32)iqmp.length();
-    stream << iqmp;
-
+    stream << m_iqmp;
     //stream << (quint32)m_p.length();
     stream << m_p;
     //stream << (quint32)m_q.length();

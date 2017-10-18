@@ -36,6 +36,7 @@ private:
     QByteArray m_dp;
     QByteArray m_dq;
     QByteArray m_qinv;
+    QByteArray m_iqmp;
 };
 
 #endif // IDENTITY_H
