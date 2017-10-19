@@ -81,6 +81,33 @@ bool BinaryStream::read(quint8 &i)
     return read((char *)&i, sizeof(i));
 }
 
+bool BinaryStream::readPack(QByteArray &ba)
+{
+   quint32 length;
+
+   if (!read(length))
+       return false;
+
+   ba.resize(length);
+
+   if (!read(ba.data(), ba.length()))
+       return false;
+
+   return true;
+}
+
+bool BinaryStream::readPack(QString &str)
+{
+    QByteArray ba;
+
+    if (!readPack(ba))
+        return false;
+
+    str = str.fromLatin1(ba);
+    return true;
+}
+
+
 bool BinaryStream::write(const char *ptr, qint64 size)
 {
     if (m_dev->write(ptr, size) < 0) {
@@ -115,4 +142,29 @@ bool BinaryStream::write(quint32 i)
 bool BinaryStream::write(quint8 i)
 {
     return write((char *)&i, sizeof(i));
+}
+
+bool BinaryStream::writePack(const QByteArray &ba)
+{
+    if (!write((quint32) ba.length()))
+        return false;
+    if (!write(ba))
+        return false;
+
+    return true;
+}
+
+bool BinaryStream::writePack(const QString &s)
+{
+    return writePack(s.toLatin1());
+}
+
+bool BinaryStream::writePack(quint8 i)
+{
+    if (!write((quint32) sizeof(i)))
+        return false;
+    if (!write(i))
+        return false;
+
+    return true;
 }

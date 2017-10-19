@@ -1,5 +1,5 @@
 #include "Client.h"
-#include "PackStream.h"
+#include "BinaryStream.h"
 #include <QtNetwork>
 
 QString Client::getEnvironmentSocketPath()
@@ -16,7 +16,7 @@ QString Client::getEnvironmentSocketPath()
 bool Client::addIdentity(Identity& identity, QString comment)
 {
     QLocalSocket socket;
-    PackStream stream(&socket);
+    BinaryStream stream(&socket);
 
     socket.connectToServer(m_socketPath);
     if (!socket.waitForConnected(500)) {
@@ -24,16 +24,13 @@ bool Client::addIdentity(Identity& identity, QString comment)
     }
 
     QByteArray requestData;
-    BinaryStream requestStream(&requestData);
+    BinaryStream request(&requestData);
 
-    requestStream.write(SSH_AGENTC_ADD_IDENTITY);
-    requestStream.write(identity.toWireFormat());
+    request.write(SSH_AGENTC_ADD_IDENTITY);
+    request.write(identity.toWireFormat());
+    request.writePack(comment);
 
-    // comment needs to be packed
-    PackStream requestPackStream(requestStream.getDevice());
-    requestPackStream.write(comment);
-
-    stream.write(requestData);
+    stream.writePack(requestData);
     stream.flush();
 
     QByteArray responseData;
@@ -48,7 +45,7 @@ bool Client::addIdentity(Identity& identity, QString comment)
 QList<QSharedPointer<Identity>> Client::getIdentities()
 {
     QLocalSocket socket;
-    PackStream stream(&socket);
+    BinaryStream stream(&socket);
     QList<QSharedPointer<Identity>> list;
 
     socket.connectToServer(m_socketPath);
@@ -57,11 +54,11 @@ QList<QSharedPointer<Identity>> Client::getIdentities()
     }
 
     // write identities request
-    stream.write(SSH_AGENTC_REQUEST_IDENTITIES);
+    stream.writePack(SSH_AGENTC_REQUEST_IDENTITIES);
 
     // read complete response packet
     QByteArray responseData;
-    stream.read(responseData);
+    stream.readPack(responseData);
 
     BinaryStream responseStream(&responseData);
 
@@ -72,24 +69,22 @@ QList<QSharedPointer<Identity>> Client::getIdentities()
         quint32 numIdentities;
         responseStream.read(numIdentities);
 
-        PackStream identityStream(responseStream.getDevice());
-
         for (quint32 i = 0; i < numIdentities; i++) {
             QByteArray keyData;
             QString keyComment;
 
-            identityStream.read(keyData);
-            identityStream.read(keyComment);
+            responseStream.readPack(keyData);
+            responseStream.readPack(keyComment);
 
-            PackStream keyStream(&keyData);
+            BinaryStream keyStream(&keyData);
 
             // FIXME: hardcoded for RSA keys
             QString keyType;
             QByteArray keyE, keyN;
 
-            keyStream.read(keyType);
-            keyStream.read(keyE);
-            keyStream.read(keyN);
+            keyStream.readPack(keyType);
+            keyStream.readPack(keyE);
+            keyStream.readPack(keyN);
 
             qInfo() << "keyType:" << keyType;
             qInfo() << "keyE:" << keyE.length() << "bytes";

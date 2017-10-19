@@ -1,5 +1,5 @@
 #include "Identity.h"
-#include "PackStream.h"
+#include "BinaryStream.h"
 #include <gcrypt.h>
 
 bool Identity::parse()
@@ -118,15 +118,15 @@ bool Identity::parseDer(QByteArray der)
 QByteArray Identity::toWireFormat()
 {
     QByteArray ba;
-    PackStream packStream(&ba);
+    BinaryStream stream(&ba);
 
-    packStream.write(QString("ssh-rsa"));
-    packStream.write(m_n);
-    packStream.write(m_e);
-    packStream.write(m_d);
-    packStream.write(m_iqmp);
-    packStream.write(m_p);
-    packStream.write(m_q);
+    stream.writePack(QString("ssh-rsa"));
+    stream.writePack(m_n);
+    stream.writePack(m_e);
+    stream.writePack(m_d);
+    stream.writePack(m_iqmp);
+    stream.writePack(m_p);
+    stream.writePack(m_q);
 
     return ba;
 }

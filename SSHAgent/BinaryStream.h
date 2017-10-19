@@ -22,10 +22,15 @@ public:
     bool read(QByteArray &ba);
     bool read(quint32 &i);
     bool read(quint8 &i);
+    bool readPack(QByteArray &ba);
+    bool readPack(QString &str);
 
     bool write(const QByteArray &ba);
     bool write(quint32 i);
     bool write(quint8 i);
+    bool writePack(const QByteArray &ba);
+    bool writePack(const QString &s);
+    bool writePack(quint8 i);
 
     bool flush();
 
