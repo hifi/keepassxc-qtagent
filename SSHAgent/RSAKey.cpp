@@ -1,26 +1,14 @@
-#include "Identity.h"
+#include "RSAKey.h"
 #include "BinaryStream.h"
+
 #include <gcrypt.h>
 
-bool Identity::parse()
+RSAKey::RSAKey()
 {
-    QStringList rows = m_pem.split(QRegExp("[\r\n]"), QString::SkipEmptyParts);
 
-    QString begin = rows.first();
-    QString end = rows.last();
-
-    if (!begin.startsWith("-----BEGIN") || !end.startsWith("-----END"))
-        return false;
-
-    rows.removeFirst();
-    rows.removeLast();
-
-    QByteArray data = QByteArray::fromBase64(rows.join("").toLatin1());
-
-    return parseDer(data);
 }
 
-bool Identity::nextTag(QDataStream &stream, quint8 &tag, quint32 &len)
+bool RSAKey::nextTag(QDataStream &stream, quint8 &tag, quint32 &len)
 {
     stream >> tag;
 
@@ -49,22 +37,23 @@ bool Identity::nextTag(QDataStream &stream, quint8 &tag, quint32 &len)
     return true;
 }
 
-bool Identity::readInt(QDataStream &stream, QByteArray &target)
+bool RSAKey::readInt(QDataStream &stream, QByteArray &target)
 {
     quint8 tag;
     quint32 len;
 
     nextTag(stream, tag, len);
 
-    if (tag != TAG_INT)
+    if (tag != RSAKey::TAG_INT)
         return false;
 
     target.resize(len);
     stream.readRawData(target.data(), len);
 }
 
-bool Identity::parseDer(QByteArray der)
+RSAKey* RSAKey::fromDer(QByteArray der)
 {
+    RSAKey* key = new RSAKey();
     quint8 tag;
     quint32 len;
 
@@ -72,50 +61,57 @@ bool Identity::parseDer(QByteArray der)
 
     nextTag(stream, tag, len);
 
-    if (tag != TAG_SEQUENCE)
-        return false;
+    if (tag != TAG_SEQUENCE) {
+        delete key;
+        return NULL;
+    }
 
     nextTag(stream, tag, len);
 
-    if (tag != TAG_INT || len != 1)
-        return false;
+    if (tag != TAG_INT || len != 1) {
+        delete key;
+        return NULL;
+    }
 
     quint8 keyType;
     stream >> keyType;
 
-    if (keyType != KEY_RSA)
-        return false;
+    if (keyType != KEY_RSA) {
+        delete key;
+        return NULL;
+    }
 
-    readInt(stream, m_n);
-    readInt(stream, m_e);
-    readInt(stream, m_d);
-    readInt(stream, m_p);
-    readInt(stream, m_q);
-    readInt(stream, m_dp);
-    readInt(stream, m_dq);
-    readInt(stream, m_qinv);
+    readInt(stream, key->m_n);
+    readInt(stream, key->m_e);
+    readInt(stream, key->m_d);
+    readInt(stream, key->m_p);
+    readInt(stream, key->m_q);
+    readInt(stream, key->m_dp);
+    readInt(stream, key->m_dq);
+    readInt(stream, key->m_qinv);
 
     // calculate iqmp
     gcry_mpi_t u, p, q;
     QByteArray iqmp_hex;
 
-    u = gcry_mpi_snew(m_p.length() * 8);
-    gcry_mpi_scan(&p, GCRYMPI_FMT_HEX, m_p.toHex().data(), 0, NULL);
-    gcry_mpi_scan(&q, GCRYMPI_FMT_HEX, m_q.toHex().data(), 0, NULL);
+    u = gcry_mpi_snew(key->m_p.length() * 8);
+    gcry_mpi_scan(&p, GCRYMPI_FMT_HEX, key->m_p.toHex().data(), 0, NULL);
+    gcry_mpi_scan(&q, GCRYMPI_FMT_HEX, key->m_q.toHex().data(), 0, NULL);
 
     mpi_invm(u, q, p);
 
-    iqmp_hex.resize((m_p.length() + 1) * 2);
+    iqmp_hex.resize((key->m_p.length() + 1) * 2);
     gcry_mpi_print(GCRYMPI_FMT_HEX, (unsigned char *)iqmp_hex.data(), iqmp_hex.length(), NULL, u);
 
     gcry_mpi_release(u);
     gcry_mpi_release(p);
     gcry_mpi_release(q);
 
-    m_iqmp = QByteArray::fromHex(iqmp_hex);
+    key->m_iqmp = QByteArray::fromHex(iqmp_hex);
+    return key;
 }
 
-QByteArray Identity::toWireFormat()
+QByteArray RSAKey::toWireFormat()
 {
     QByteArray ba;
     BinaryStream stream(&ba);

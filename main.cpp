@@ -3,6 +3,7 @@
 
 #include "SSHAgent/Client.h"
 #include "SSHAgent/Identity.h"
+#include "SSHAgent/PEM.h"
 
 #include <iostream>
 
@@ -21,15 +22,26 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 int main(int argc, char *argv[])
 {
     qInstallMessageHandler(messageHandler);
-
-    QFile file("id_rsa");
-    file.open(QIODevice::ReadOnly);
-
-    Identity id(file);
-    id.parse();
-
     Client client;
-    client.addIdentity(id, "id_rsa");
+
+    QList<QString> keyNames;
+    keyNames.append("id_rsa");
+    keyNames.append("id_ed25519");
+
+    foreach (QString keyName, keyNames) {
+        QFile file(keyName);
+        file.open(QIODevice::ReadOnly);
+
+        PEM pem(file);
+        pem.parse();
+
+        Identity* id = pem.getIdentity();
+        if (id) {
+            qInfo() << "Adding identity to agent";
+            client.addIdentity(*id, "id_rsa");
+            delete id;
+        }
+    }
 
     /*
     auto identities = client.getIdentities();
