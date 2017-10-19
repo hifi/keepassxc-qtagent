@@ -13,7 +13,7 @@ QString Client::getEnvironmentSocketPath()
     return ""; // should return null or not?
 }
 
-bool Client::addIdentity(Identity& identity, QString comment)
+bool Client::addIdentity(OpenSSHKey &key)
 {
     QLocalSocket socket;
     BinaryStream stream(&socket);
@@ -27,8 +27,7 @@ bool Client::addIdentity(Identity& identity, QString comment)
     BinaryStream request(&requestData);
 
     request.write(SSH_AGENTC_ADD_IDENTITY);
-    request.write(identity.toWireFormat());
-    request.writePack(comment);
+    key.toStream(request);
 
     stream.writePack(requestData);
     stream.flush();
@@ -42,11 +41,11 @@ bool Client::addIdentity(Identity& identity, QString comment)
     return true;
 }
 
-QList<QSharedPointer<Identity>> Client::getIdentities()
+QList<QSharedPointer<OpenSSHKey>> Client::getIdentities()
 {
     QLocalSocket socket;
     BinaryStream stream(&socket);
-    QList<QSharedPointer<Identity>> list;
+    QList<QSharedPointer<OpenSSHKey>> list;
 
     socket.connectToServer(m_socketPath);
     if (!socket.waitForConnected(500)) {
@@ -91,14 +90,14 @@ QList<QSharedPointer<Identity>> Client::getIdentities()
             qInfo() << "keyN:" << keyN.length() << "bytes";
             qInfo() << "keyComment:" << keyComment;
 
-            //list.push_back(QSharedPointer<Identity>(new Identity()));
+            //list.push_back(QSharedPointer<OpenSSHKey>(new OpenSSHKey()));
         }
     }
 
     return list;
 }
 
-bool Client::removeIdentity(Identity& identity)
+bool Client::removeIdentity(OpenSSHKey& identity)
 {
     return false;
 }

@@ -2,7 +2,6 @@
 #include <QtCore>
 
 #include "SSHAgent/Client.h"
-#include "SSHAgent/Identity.h"
 #include "SSHAgent/PEM.h"
 
 #include <iostream>
@@ -27,6 +26,7 @@ int main(int argc, char *argv[])
     QList<QString> keyNames;
     keyNames.append("id_rsa");
     keyNames.append("id_ed25519");
+    keyNames.append("id_rsa_new");
 
     foreach (QString keyName, keyNames) {
         QFile file(keyName);
@@ -35,11 +35,10 @@ int main(int argc, char *argv[])
         PEM pem(file);
         pem.parse();
 
-        Identity* id = pem.getIdentity();
-        if (id) {
+        QList<QSharedPointer<OpenSSHKey>> keys = pem.getKeys();
+        foreach (QSharedPointer<OpenSSHKey> key, keys) {
             qInfo() << "Adding identity to agent";
-            client.addIdentity(*id, "id_rsa");
-            delete id;
+            client.addIdentity(*key.data());
         }
     }
 

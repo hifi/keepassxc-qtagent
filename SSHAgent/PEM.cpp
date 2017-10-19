@@ -1,5 +1,7 @@
 #include "PEM.h"
+#include "BinaryStream.h"
 #include "RSAKey.h"
+#include "OpenSSHKey.h"
 
 bool PEM::parse()
 {
@@ -32,11 +34,14 @@ QString PEM::getType()
     return m_type;
 }
 
-Identity* PEM::getIdentity()
+QList<QSharedPointer<OpenSSHKey>> PEM::getKeys()
 {
     if (m_type == "RSA PRIVATE KEY") {
-        return RSAKey::fromDer(m_data);
+        return RSAKey::parse(m_data);
+    } else if (m_type == "OPENSSH PRIVATE KEY") {
+        return OpenSSHKey::parse(m_data);
     }
 
-    return Q_NULLPTR;
+    QList<QSharedPointer<OpenSSHKey>> noKeys;
+    return noKeys;
 }

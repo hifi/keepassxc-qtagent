@@ -1,9 +1,12 @@
 #ifndef PEM_H
 #define PEM_H
 
-#include "Identity.h"
-
+#include "OpenSSHKey.h"
 #include <QtCore>
+
+namespace SSHAgent {
+    class PEM;
+}
 
 class PEM
 {
@@ -14,7 +17,7 @@ public:
 
     bool parse();
     QString getType();
-    Identity* getIdentity();
+    QList<QSharedPointer<OpenSSHKey>> getKeys();
 
 private:
     QString m_string;

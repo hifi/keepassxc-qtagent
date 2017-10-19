@@ -3,7 +3,7 @@
 
 #include <QtCore>
 #include <QList>
-#include "Identity.h"
+#include "OpenSSHKey.h"
 
 namespace SSHAgent {
     class Client;
@@ -23,9 +23,9 @@ public:
 
     static QString getEnvironmentSocketPath();
 
-    bool addIdentity(Identity&, QString);
-    QList<QSharedPointer<Identity>> getIdentities();
-    bool removeIdentity(Identity&);
+    bool addIdentity(OpenSSHKey&);
+    QList<QSharedPointer<OpenSSHKey>> getIdentities();
+    bool removeIdentity(OpenSSHKey&);
 
 private:
     QString m_socketPath;
