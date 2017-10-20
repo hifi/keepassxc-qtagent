@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
     keyNames.append("id_rsa");
     keyNames.append("id_ed25519");
     keyNames.append("id_rsa_new");
+    keyNames.append("id_dsa_new");
+    keyNames.append("id_ecdsa_new");
 
     foreach (QString keyName, keyNames) {
         QFile file(keyName);

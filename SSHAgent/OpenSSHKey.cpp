@@ -86,27 +86,31 @@ QList<QSharedPointer<OpenSSHKey>> OpenSSHKey::parse(QByteArray &data)
 
 bool OpenSSHKey::fromStream(BinaryStream &stream)
 {
+    int keyParts;
     m_data.clear();
     stream.readPack(m_type);
 
-    if (m_type == "ssh-rsa") {
-        for (int i = 0; i < 6; i++) {
-            QByteArray t;
-            stream.readPack(t);
-            m_data.append(t);
-        }
+    if (m_type == "ssh-dss") {
+        keyParts = 5;
+    } else if (m_type.startsWith("ecdsa-sha2-")) {
+        keyParts = 3;
+    } else if (m_type == "ssh-rsa") {
+        keyParts = 6;
     } else if (m_type == "ssh-ed25519") {
-        for (int i = 0; i < 2; i++) {
-            QByteArray t;
-            stream.readPack(t);
-            m_data.append(t);
-        }
+        keyParts = 2;
     } else {
         qWarning() << "Unknown OpenSSH key type" << m_type;
         return false;
     }
 
+    for (int i = 0; i < keyParts; i++) {
+        QByteArray t;
+        stream.readPack(t);
+        m_data.append(t);
+    }
+
     stream.readPack(m_comment);
+
     return true;
 }
 
