@@ -1,14 +1,14 @@
-#ifndef RSAKEY_H
-#define RSAKEY_H
+#ifndef ASN1KEY_H
+#define ASN1KEY_H
 
 #include "OpenSSHKey.h"
 #include <QtCore>
 
 namespace SSHAgent {
-    class RSAKey;
+    class ASN1Key;
 }
 
-class RSAKey
+class ASN1Key
 {
 public:
     static QList<QSharedPointer<OpenSSHKey>> parseDSA(QByteArray &ba);
@@ -17,13 +17,13 @@ public:
 private:
     static const quint8 TAG_INT        = 0x02;
     static const quint8 TAG_SEQUENCE   = 0x30;
-    static const quint8 KEY_RSA        = 0x0;
+    static const quint8 KEY_ZERO       = 0x0;
 
-    RSAKey() { }
+    ASN1Key() { }
     static QByteArray calculateIqmp(QByteArray &p, QByteArray &q);
 
     static bool nextTag(BinaryStream &stream, quint8 &tag, quint32 &len);
     static bool readInt(BinaryStream &stream, QByteArray &target);
 };
 
-#endif // RSAKEY_H
+#endif // ASN1KEY_H

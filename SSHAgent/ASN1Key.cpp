@@ -1,8 +1,8 @@
-#include "RSAKey.h"
+#include "ASN1Key.h"
 
 #include <gcrypt.h>
 
-QList<QSharedPointer<OpenSSHKey>> RSAKey::parseDSA(QByteArray &ba)
+QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseDSA(QByteArray &ba)
 {
     QList<QSharedPointer<OpenSSHKey>> keyList;
 
@@ -27,7 +27,7 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parseDSA(QByteArray &ba)
     quint8 keyType;
     stream.read(keyType);
 
-    if (keyType != KEY_RSA) {
+    if (keyType != KEY_ZERO) {
         return keyList;
     }
 
@@ -53,7 +53,7 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parseDSA(QByteArray &ba)
     return keyList;
 }
 
-QList<QSharedPointer<OpenSSHKey>> RSAKey::parseRSA(QByteArray &ba)
+QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseRSA(QByteArray &ba)
 {
     QList<QSharedPointer<OpenSSHKey>> keyList;
 
@@ -78,7 +78,7 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parseRSA(QByteArray &ba)
     quint8 keyType;
     stream.read(keyType);
 
-    if (keyType != KEY_RSA) {
+    if (keyType != KEY_ZERO) {
         return keyList;
     }
 
@@ -108,7 +108,7 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parseRSA(QByteArray &ba)
     return keyList;
 }
 
-QByteArray RSAKey::calculateIqmp(QByteArray &bap, QByteArray &baq)
+QByteArray ASN1Key::calculateIqmp(QByteArray &bap, QByteArray &baq)
 {
     gcry_mpi_t u, p, q;
     QByteArray iqmp_hex;
@@ -129,7 +129,7 @@ QByteArray RSAKey::calculateIqmp(QByteArray &bap, QByteArray &baq)
     return QByteArray::fromHex(iqmp_hex);
 }
 
-bool RSAKey::nextTag(BinaryStream &stream, quint8 &tag, quint32 &len)
+bool ASN1Key::nextTag(BinaryStream &stream, quint8 &tag, quint32 &len)
 {
     stream.read(tag);
 
@@ -158,14 +158,14 @@ bool RSAKey::nextTag(BinaryStream &stream, quint8 &tag, quint32 &len)
     return true;
 }
 
-bool RSAKey::readInt(BinaryStream &stream, QByteArray &target)
+bool ASN1Key::readInt(BinaryStream &stream, QByteArray &target)
 {
     quint8 tag;
     quint32 len;
 
     nextTag(stream, tag, len);
 
-    if (tag != RSAKey::TAG_INT)
+    if (tag != ASN1Key::TAG_INT)
         return false;
 
     target.resize(len);

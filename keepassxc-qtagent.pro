@@ -12,9 +12,9 @@ TEMPLATE = app
 SOURCES += main.cpp \
     SSHAgent/Client.cpp \
     SSHAgent/BinaryStream.cpp \
-    SSHAgent/RSAKey.cpp \
     SSHAgent/PEM.cpp \
-    SSHAgent/OpenSSHKey.cpp
+    SSHAgent/OpenSSHKey.cpp \
+    SSHAgent/ASN1Key.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -30,8 +30,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 HEADERS += \
     SSHAgent/Client.h \
     SSHAgent/BinaryStream.h \
-    SSHAgent/RSAKey.h \
     SSHAgent/PEM.h \
-    SSHAgent/OpenSSHKey.h
+    SSHAgent/OpenSSHKey.h \
+    SSHAgent/ASN1Key.h
 
 unix:!macx: LIBS += -lgcrypt
