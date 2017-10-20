@@ -192,6 +192,20 @@ bool OpenSSHKey::readPrivate(BinaryStream &stream)
     return true;
 }
 
+bool OpenSSHKey::writePublic(BinaryStream &stream)
+{
+    if (m_publicData.length() == 0)
+        return false;
+
+    stream.writePack(m_type);
+
+    foreach (QByteArray t, m_publicData) {
+        stream.writePack(t);
+    }
+
+    return true;
+}
+
 bool OpenSSHKey::writePrivate(BinaryStream &stream)
 {
     if (m_privateData.length() == 0)

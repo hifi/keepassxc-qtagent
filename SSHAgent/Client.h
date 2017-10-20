@@ -17,6 +17,7 @@ public:
     const quint8 SSH_AGENTC_REQUEST_IDENTITIES  = 11;
     const quint8 SSH_AGENT_IDENTITIES_ANSWER    = 12;
     const quint8 SSH_AGENTC_ADD_IDENTITY        = 17;
+    const quint8 SSH_AGENTC_REMOVE_IDENTITY     = 18;
     const quint8 SSH_AGENTC_ADD_ID_CONSTRAINED  = 25;
 
     const quint8 SSH_AGENT_CONSTRAIN_LIFETIME   = 1;

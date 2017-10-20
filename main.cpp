@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     Client client;
 
     QList<QString> keyNames;
+    QList<QSharedPointer<OpenSSHKey>> myKeys;
 
     keyNames.append("id_dsa");
     keyNames.append("id_rsa");
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
     keyNames.append("id_dsa_new");
     keyNames.append("id_ecdsa_new");
 
-    qInfo() << "Adding identities";
+    qInfo() << "Parsing identities";
 
     foreach (QString keyName, keyNames) {
         QFile file(keyName);
@@ -42,13 +43,17 @@ int main(int argc, char *argv[])
         pem.parse();
 
         QList<QSharedPointer<OpenSSHKey>> keys = pem.getKeys();
-        foreach (QSharedPointer<OpenSSHKey> key, keys) {
-            OpenSSHKey *k = key.data();
+        myKeys.append(keys);
+    }
 
-            qInfo() << k->getKeyLength() << k->getFingerprint() << k->getComment() << k->getType();
+    qInfo() << "Adding identities";
 
-            client.addIdentity(*key);
-        }
+    foreach (QSharedPointer<OpenSSHKey> key, myKeys) {
+        OpenSSHKey *k = key.data();
+
+        qInfo() << k->getKeyLength() << k->getFingerprint() << k->getComment() << k->getType();
+
+        client.addIdentity(*key);
     }
 
     qInfo() << "Reading identities";
@@ -58,6 +63,12 @@ int main(int argc, char *argv[])
     foreach (QSharedPointer<OpenSSHKey> key, identities) {
         OpenSSHKey *k = key.data();
         qInfo() << k->getKeyLength() << k->getFingerprint() << k->getComment() << k->getType();
+    }
+
+    qInfo() << "Removing identities";
+
+    foreach (QSharedPointer<OpenSSHKey> key, myKeys) {
+        client.removeIdentity(*key.data());
     }
 
     return 0;

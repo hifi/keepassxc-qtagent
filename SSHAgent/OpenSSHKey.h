@@ -27,6 +27,7 @@ public:
 
     bool readPublic(BinaryStream &stream);
     bool readPrivate(BinaryStream &stream);
+    bool writePublic(BinaryStream &stream);
     bool writePrivate(BinaryStream &stream);
 private:
 

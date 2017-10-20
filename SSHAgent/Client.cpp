@@ -96,7 +96,34 @@ QList<QSharedPointer<OpenSSHKey>> Client::getIdentities()
     return list;
 }
 
-bool Client::removeIdentity(OpenSSHKey& identity)
+bool Client::removeIdentity(OpenSSHKey& key)
 {
-    return false;
+    QLocalSocket socket;
+    BinaryStream stream(&socket);
+
+    socket.connectToServer(m_socketPath);
+    if (!socket.waitForConnected(500)) {
+        return false;
+    }
+
+    QByteArray requestData;
+    BinaryStream request(&requestData);
+
+    QByteArray keyData;
+    BinaryStream keyStream(&keyData);
+    key.writePublic(keyStream);
+
+    request.write(SSH_AGENTC_REMOVE_IDENTITY);
+    request.writePack(keyData);
+
+    stream.writePack(requestData);
+    stream.flush();
+
+    QByteArray responseData;
+    stream.read(responseData);
+
+    if (responseData.length() < 1 || (quint8) responseData[0] != SSH_AGENT_SUCCESS)
+        return false;
+
+    return true;
 }
