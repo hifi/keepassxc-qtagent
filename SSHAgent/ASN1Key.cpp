@@ -19,16 +19,23 @@ QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseDSA(QByteArray &ba)
     readInt(stream, y);
     readInt(stream, x);
 
-    QList<QByteArray> data;
-    data.append(p);
-    data.append(q);
-    data.append(g);
-    data.append(y);
-    data.append(x);
+    QList<QByteArray> publicData;
+    publicData.append(p);
+    publicData.append(q);
+    publicData.append(g);
+    publicData.append(y);
+
+    QList<QByteArray> privateData;
+    privateData.append(p);
+    privateData.append(q);
+    privateData.append(g);
+    privateData.append(y);
+    privateData.append(x);
 
     OpenSSHKey *key = new OpenSSHKey();
     key->setType("ssh-dss");
-    key->setData(data);
+    key->setPublicData(publicData);
+    key->setPrivateData(privateData);
     key->setComment("id_dsa");
     keyList.append(QSharedPointer<OpenSSHKey>(key));
 
@@ -55,17 +62,22 @@ QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseRSA(QByteArray &ba)
     readInt(stream, dq);
     readInt(stream, qinv);
 
-    QList<QByteArray> data;
-    data.append(n);
-    data.append(e);
-    data.append(d);
-    data.append(calculateIqmp(p, q));
-    data.append(p);
-    data.append(q);
+    QList<QByteArray> publicData;
+    publicData.append(e);
+    publicData.append(n);
+
+    QList<QByteArray> privateData;
+    privateData.append(n);
+    privateData.append(e);
+    privateData.append(d);
+    privateData.append(calculateIqmp(p, q));
+    privateData.append(p);
+    privateData.append(q);
 
     OpenSSHKey *key = new OpenSSHKey();
     key->setType("ssh-rsa");
-    key->setData(data);
+    key->setPublicData(publicData);
+    key->setPrivateData(privateData);
     key->setComment("id_rsa");
     keyList.append(QSharedPointer<OpenSSHKey>(key));
 

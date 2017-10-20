@@ -24,12 +24,15 @@ int main(int argc, char *argv[])
     Client client;
 
     QList<QString> keyNames;
+
     keyNames.append("id_dsa");
     keyNames.append("id_rsa");
     keyNames.append("id_ed25519");
     keyNames.append("id_rsa_new");
     keyNames.append("id_dsa_new");
     keyNames.append("id_ecdsa_new");
+
+    qInfo() << "Adding identities";
 
     foreach (QString keyName, keyNames) {
         QFile file(keyName);
@@ -40,18 +43,22 @@ int main(int argc, char *argv[])
 
         QList<QSharedPointer<OpenSSHKey>> keys = pem.getKeys();
         foreach (QSharedPointer<OpenSSHKey> key, keys) {
-            qInfo() << "Adding identity to agent";
-            client.addIdentity(*key.data());
+            OpenSSHKey *k = key.data();
+
+            qInfo() << k->getKeyLength() << k->getFingerprint() << k->getComment() << k->getType();
+
+            client.addIdentity(*key);
         }
     }
 
-    /*
+    qInfo() << "Reading identities";
+
     auto identities = client.getIdentities();
 
-    foreach (QSharedPointer<Identity> id, identities) {
-        //qInfo() << id;
+    foreach (QSharedPointer<OpenSSHKey> key, identities) {
+        OpenSSHKey *k = key.data();
+        qInfo() << k->getKeyLength() << k->getFingerprint() << k->getComment() << k->getType();
     }
-    */
 
     return 0;
 }

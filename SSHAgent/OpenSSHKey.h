@@ -11,20 +11,28 @@ class OpenSSHKey
 {
 public:
     OpenSSHKey() { }
-    OpenSSHKey(QString type, QList<QByteArray> data, QString comment) : m_type(type), m_data(data), m_comment(comment) { }
+    OpenSSHKey(QString type, QList<QByteArray> data, QString comment) : m_type(type), m_privateData(data), m_comment(comment) { }
+
+    QString getType();
+    int getKeyLength();
+    QString getFingerprint();
+    QString getComment();
 
     void setType(QString type);
-    void setData(QList<QByteArray> data);
+    void setPublicData(QList<QByteArray> data);
+    void setPrivateData(QList<QByteArray> data);
     void setComment(QString comment);
 
     static QList<QSharedPointer<OpenSSHKey>> parse(QByteArray &data);
 
-    bool fromStream(BinaryStream &stream);
-    bool toStream(BinaryStream &stream);
+    bool readPublic(BinaryStream &stream);
+    bool readPrivate(BinaryStream &stream);
+    bool writePrivate(BinaryStream &stream);
 private:
 
     QString m_type;
-    QList<QByteArray> m_data;
+    QList<QByteArray> m_publicData;
+    QList<QByteArray> m_privateData;
     QString m_comment;
 };
 

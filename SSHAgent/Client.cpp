@@ -27,7 +27,7 @@ bool Client::addIdentity(OpenSSHKey &key, quint32 lifetime)
     BinaryStream request(&requestData);
 
     request.write(lifetime > 0 ? SSH_AGENTC_ADD_ID_CONSTRAINED : SSH_AGENTC_ADD_IDENTITY);
-    key.toStream(request);
+    key.writePrivate(request);
 
     if (lifetime > 0) {
         request.write(SSH_AGENT_CONSTRAIN_LIFETIME);
@@ -82,20 +82,14 @@ QList<QSharedPointer<OpenSSHKey>> Client::getIdentities()
 
             BinaryStream keyStream(&keyData);
 
-            // FIXME: hardcoded for RSA keys
-            QString keyType;
-            QByteArray keyE, keyN;
+            OpenSSHKey *key = new OpenSSHKey();
 
-            keyStream.readPack(keyType);
-            keyStream.readPack(keyE);
-            keyStream.readPack(keyN);
-
-            qInfo() << "keyType:" << keyType;
-            qInfo() << "keyE:" << keyE.length() << "bytes";
-            qInfo() << "keyN:" << keyN.length() << "bytes";
-            qInfo() << "keyComment:" << keyComment;
-
-            //list.push_back(QSharedPointer<OpenSSHKey>(new OpenSSHKey()));
+            if (key->readPublic(keyStream)) {
+                key->setComment(keyComment);
+                list.append(QSharedPointer<OpenSSHKey>(key));
+            } else {
+                delete key;
+            }
         }
     }
 
