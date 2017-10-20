@@ -13,7 +13,7 @@ QString Client::getEnvironmentSocketPath()
     return ""; // should return null or not?
 }
 
-bool Client::addIdentity(OpenSSHKey &key)
+bool Client::addIdentity(OpenSSHKey &key, quint32 lifetime)
 {
     QLocalSocket socket;
     BinaryStream stream(&socket);
@@ -26,8 +26,13 @@ bool Client::addIdentity(OpenSSHKey &key)
     QByteArray requestData;
     BinaryStream request(&requestData);
 
-    request.write(SSH_AGENTC_ADD_IDENTITY);
+    request.write(lifetime > 0 ? SSH_AGENTC_ADD_ID_CONSTRAINED : SSH_AGENTC_ADD_IDENTITY);
     key.toStream(request);
+
+    if (lifetime > 0) {
+        request.write(SSH_AGENT_CONSTRAIN_LIFETIME);
+        request.write(lifetime);
+    }
 
     stream.writePack(requestData);
     stream.flush();
