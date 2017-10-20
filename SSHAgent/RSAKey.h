@@ -11,7 +11,8 @@ namespace SSHAgent {
 class RSAKey
 {
 public:
-    static QList<QSharedPointer<OpenSSHKey>> parse(QByteArray &ba);
+    static QList<QSharedPointer<OpenSSHKey>> parseDSA(QByteArray &ba);
+    static QList<QSharedPointer<OpenSSHKey>> parseRSA(QByteArray &ba);
 
 private:
     static const quint8 TAG_INT        = 0x02;

@@ -36,10 +36,14 @@ QString PEM::getType()
 
 QList<QSharedPointer<OpenSSHKey>> PEM::getKeys()
 {
-    if (m_type == "RSA PRIVATE KEY") {
-        return RSAKey::parse(m_data);
+    if (m_type == "DSA PRIVATE KEY") {
+        return RSAKey::parseDSA(m_data);
+    } else if (m_type == "RSA PRIVATE KEY") {
+        return RSAKey::parseRSA(m_data);
     } else if (m_type == "OPENSSH PRIVATE KEY") {
         return OpenSSHKey::parse(m_data);
+    } else {
+        qWarning() << "Unknown PEM key type" << m_type;
     }
 
     QList<QSharedPointer<OpenSSHKey>> noKeys;

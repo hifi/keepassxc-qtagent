@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     Client client;
 
     QList<QString> keyNames;
+    keyNames.append("id_dsa");
     keyNames.append("id_rsa");
     keyNames.append("id_ed25519");
     keyNames.append("id_rsa_new");

@@ -2,14 +2,65 @@
 
 #include <gcrypt.h>
 
-QList<QSharedPointer<OpenSSHKey>> RSAKey::parse(QByteArray &ba)
+QList<QSharedPointer<OpenSSHKey>> RSAKey::parseDSA(QByteArray &ba)
 {
     QList<QSharedPointer<OpenSSHKey>> keyList;
 
     quint8 tag;
     quint32 len;
+    QByteArray p,q,g,y,x;
 
+    BinaryStream stream(&ba);
+
+    nextTag(stream, tag, len);
+
+    if (tag != TAG_SEQUENCE) {
+        return keyList;
+    }
+
+    nextTag(stream, tag, len);
+
+    if (tag != TAG_INT || len != 1) {
+        return keyList;
+    }
+
+    quint8 keyType;
+    stream.read(keyType);
+
+    if (keyType != KEY_RSA) {
+        return keyList;
+    }
+
+    readInt(stream, p);
+    readInt(stream, q);
+    readInt(stream, g);
+    readInt(stream, y);
+    readInt(stream, x);
+
+    QList<QByteArray> data;
+    data.append(p);
+    data.append(q);
+    data.append(g);
+    data.append(y);
+    data.append(x);
+
+    OpenSSHKey *key = new OpenSSHKey();
+    key->setType("ssh-dss");
+    key->setData(data);
+    key->setComment("id_dsa");
+    keyList.append(QSharedPointer<OpenSSHKey>(key));
+
+    return keyList;
+}
+
+QList<QSharedPointer<OpenSSHKey>> RSAKey::parseRSA(QByteArray &ba)
+{
+    QList<QSharedPointer<OpenSSHKey>> keyList;
+
+    quint8 tag;
+    quint32 len;
     QByteArray n,e,d,p,q,dp,dq,qinv;
+
     BinaryStream stream(&ba);
 
     nextTag(stream, tag, len);
@@ -52,8 +103,8 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parse(QByteArray &ba)
     key->setType("ssh-rsa");
     key->setData(data);
     key->setComment("id_rsa");
-
     keyList.append(QSharedPointer<OpenSSHKey>(key));
+
     return keyList;
 }
 
