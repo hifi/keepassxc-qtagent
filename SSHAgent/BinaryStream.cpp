@@ -76,6 +76,16 @@ bool BinaryStream::read(quint32 &i)
     return false;
 }
 
+bool BinaryStream::read(quint16 &i)
+{
+    if (read((char *)&i, sizeof(i))) {
+        i = qFromBigEndian<quint16>(i);
+        return true;
+    }
+
+    return false;
+}
+
 bool BinaryStream::read(quint8 &i)
 {
     return read((char *)&i, sizeof(i));

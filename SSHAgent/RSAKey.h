@@ -21,8 +21,8 @@ private:
     RSAKey() { }
     static QByteArray calculateIqmp(QByteArray &p, QByteArray &q);
 
-    static bool nextTag(QDataStream &stream, quint8 &tag, quint32 &len);
-    static bool readInt(QDataStream &stream, QByteArray &target);
+    static bool nextTag(BinaryStream &stream, quint8 &tag, quint32 &len);
+    static bool readInt(BinaryStream &stream, QByteArray &target);
 };
 
 #endif // RSAKEY_H

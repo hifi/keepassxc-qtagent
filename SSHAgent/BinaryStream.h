@@ -21,6 +21,7 @@ public:
 
     bool read(QByteArray &ba);
     bool read(quint32 &i);
+    bool read(quint16 &i);
     bool read(quint8 &i);
     bool readPack(QByteArray &ba);
     bool readPack(QString &str);

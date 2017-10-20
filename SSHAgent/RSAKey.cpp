@@ -1,6 +1,4 @@
 #include "RSAKey.h"
-#include "BinaryStream.h"
-#include "OpenSSHKey.h"
 
 #include <gcrypt.h>
 
@@ -11,16 +9,8 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parse(QByteArray &ba)
     quint8 tag;
     quint32 len;
 
-    QByteArray n;
-    QByteArray e;
-    QByteArray d;
-    QByteArray p;
-    QByteArray q;
-    QByteArray dp;
-    QByteArray dq;
-    QByteArray qinv;
-
-    QDataStream stream(ba);
+    QByteArray n,e,d,p,q,dp,dq,qinv;
+    BinaryStream stream(&ba);
 
     nextTag(stream, tag, len);
 
@@ -35,7 +25,7 @@ QList<QSharedPointer<OpenSSHKey>> RSAKey::parse(QByteArray &ba)
     }
 
     quint8 keyType;
-    stream >> keyType;
+    stream.read(keyType);
 
     if (keyType != KEY_RSA) {
         return keyList;
@@ -88,24 +78,24 @@ QByteArray RSAKey::calculateIqmp(QByteArray &bap, QByteArray &baq)
     return QByteArray::fromHex(iqmp_hex);
 }
 
-bool RSAKey::nextTag(QDataStream &stream, quint8 &tag, quint32 &len)
+bool RSAKey::nextTag(BinaryStream &stream, quint8 &tag, quint32 &len)
 {
-    stream >> tag;
+    stream.read(tag);
 
     quint8 lenByte;
-    stream >> lenByte;
+    stream.read(lenByte);
 
     if (lenByte & 0x80) {
         quint32 bytes = lenByte & ~0x80;
         if (bytes == 1) {
-            stream >> lenByte;
+            stream.read(lenByte);
             len = lenByte;
         } else if (bytes == 2) {
             quint16 lenShort;
-            stream >> lenShort;
+            stream.read(lenShort);
             len = lenShort;
         } else if (bytes == 4) {
-            stream >> len;
+            stream.read(len);
         } else {
             qWarning() << "ASN.1 tag length is" << bytes << "bytes";
             return false;
@@ -117,7 +107,7 @@ bool RSAKey::nextTag(QDataStream &stream, quint8 &tag, quint32 &len)
     return true;
 }
 
-bool RSAKey::readInt(QDataStream &stream, QByteArray &target)
+bool RSAKey::readInt(BinaryStream &stream, QByteArray &target)
 {
     quint8 tag;
     quint32 len;
@@ -128,6 +118,6 @@ bool RSAKey::readInt(QDataStream &stream, QByteArray &target)
         return false;
 
     target.resize(len);
-    stream.readRawData(target.data(), len);
+    stream.read(target);
     return true;
 }
