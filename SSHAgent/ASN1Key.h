@@ -20,6 +20,7 @@ private:
     static const quint8 KEY_ZERO       = 0x0;
 
     ASN1Key() { }
+    static bool parseHeader(BinaryStream &stream, quint8 wantedType);
     static QByteArray calculateIqmp(QByteArray &p, QByteArray &q);
 
     static bool nextTag(BinaryStream &stream, quint8 &tag, quint32 &len);

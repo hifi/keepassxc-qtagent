@@ -6,31 +6,13 @@ QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseDSA(QByteArray &ba)
 {
     QList<QSharedPointer<OpenSSHKey>> keyList;
 
-    quint8 tag;
-    quint32 len;
-    QByteArray p,q,g,y,x;
-
     BinaryStream stream(&ba);
 
-    nextTag(stream, tag, len);
-
-    if (tag != TAG_SEQUENCE) {
+    if (!parseHeader(stream, KEY_ZERO)) {
         return keyList;
     }
 
-    nextTag(stream, tag, len);
-
-    if (tag != TAG_INT || len != 1) {
-        return keyList;
-    }
-
-    quint8 keyType;
-    stream.read(keyType);
-
-    if (keyType != KEY_ZERO) {
-        return keyList;
-    }
-
+    QByteArray p,q,g,y,x;
     readInt(stream, p);
     readInt(stream, q);
     readInt(stream, g);
@@ -57,31 +39,13 @@ QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseRSA(QByteArray &ba)
 {
     QList<QSharedPointer<OpenSSHKey>> keyList;
 
-    quint8 tag;
-    quint32 len;
-    QByteArray n,e,d,p,q,dp,dq,qinv;
-
     BinaryStream stream(&ba);
 
-    nextTag(stream, tag, len);
-
-    if (tag != TAG_SEQUENCE) {
+    if (!parseHeader(stream, KEY_ZERO)) {
         return keyList;
     }
 
-    nextTag(stream, tag, len);
-
-    if (tag != TAG_INT || len != 1) {
-        return keyList;
-    }
-
-    quint8 keyType;
-    stream.read(keyType);
-
-    if (keyType != KEY_ZERO) {
-        return keyList;
-    }
-
+    QByteArray n,e,d,p,q,dp,dq,qinv;
     readInt(stream, n);
     readInt(stream, e);
     readInt(stream, d);
@@ -106,6 +70,29 @@ QList<QSharedPointer<OpenSSHKey>> ASN1Key::parseRSA(QByteArray &ba)
     keyList.append(QSharedPointer<OpenSSHKey>(key));
 
     return keyList;
+}
+
+bool ASN1Key::parseHeader(BinaryStream &stream, quint8 wantedType)
+{
+    quint8 tag;
+    quint32 len;
+
+    nextTag(stream, tag, len);
+
+    if (tag != TAG_SEQUENCE) {
+        return false;
+    }
+
+    nextTag(stream, tag, len);
+
+    if (tag != TAG_INT || len != 1) {
+        return false;
+    }
+
+    quint8 keyType;
+    stream.read(keyType);
+
+    return (keyType == wantedType);
 }
 
 QByteArray ASN1Key::calculateIqmp(QByteArray &bap, QByteArray &baq)
